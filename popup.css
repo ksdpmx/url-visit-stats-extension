@@ -1,0 +1,182 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 420px;
+  color: #24292f;
+  background: #ffffff;
+  font: 13px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+main {
+  padding: 14px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+h2 {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+section + section {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #d8dee4;
+}
+
+button {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+  color: #24292f;
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 8px;
+}
+
+button:hover {
+  background: #eef1f4;
+}
+
+.eyebrow {
+  margin-bottom: 2px;
+  color: #57606a;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.url {
+  overflow-wrap: anywhere;
+  margin-top: 4px;
+  color: #57606a;
+  font-size: 12px;
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.metric {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #d8dee4;
+  border-radius: 6px;
+  background: #f6f8fa;
+}
+
+.metric-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.metric-label {
+  color: #57606a;
+  font-size: 11px;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.read-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.read-control button.is-read {
+  border-color: #1a7f37;
+  background: #dafbe1;
+  color: #1a7f37;
+}
+
+.read-status {
+  color: #57606a;
+  font-size: 12px;
+}
+
+.details div {
+  min-width: 0;
+}
+
+dt {
+  color: #57606a;
+  font-size: 11px;
+}
+
+dd {
+  overflow: hidden;
+  margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.list {
+  display: grid;
+  gap: 6px;
+  max-height: 160px;
+  overflow: auto;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.list li {
+  padding-right: 4px;
+}
+
+.item-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.item-url {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-count {
+  flex: 0 0 auto;
+  color: #0969da;
+  font-weight: 650;
+}
+
+.item-sub {
+  overflow: hidden;
+  color: #57606a;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>URL Visit Stats Options</title>
+    <link rel="stylesheet" href="options.css">
+  </head>
+  <body>
+    <main>
+      <h1>URL Visit Stats Options</h1>
+      <form id="settings-form">
+        <label>
+          <input id="strip-hash" type="checkbox">
+          Ignore URL hash fragments
+        </label>
+        <label>
+          <input id="strip-trailing-slash" type="checkbox">
+          Treat trailing slash as the same URL
+        </label>
+        <label>
+          <input id="strip-tracking-params" type="checkbox">
+          Ignore tracking query parameters
+        </label>
+        <label>
+          Tracking parameters
+          <textarea id="tracking-params" rows="5"></textarea>
+        </label>
+        <label>
+          Recent visit limit
+          <input id="keep-recent-limit" type="number" min="25" max="2000" step="25">
+        </label>
+        <div class="actions">
+          <button type="submit">Save</button>
+          <button id="clear-stats" type="button">Clear local stats</button>
+        </div>
+      </form>
+      <p id="status" role="status"></p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

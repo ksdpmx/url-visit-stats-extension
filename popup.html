@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>URL Visit Stats</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main>
+      <section class="current">
+        <div class="eyebrow">Current page</div>
+        <h1 id="title">URL Visit Stats</h1>
+        <p id="url" class="url"></p>
+        <div class="metric-grid">
+          <div class="metric">
+            <div class="metric-value" id="exact-count">-</div>
+            <div class="metric-label">Exact URL local</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="normalized-count">-</div>
+            <div class="metric-label">Normalized URL</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value" id="host-count">-</div>
+            <div class="metric-label">Host</div>
+          </div>
+        </div>
+        <dl class="details">
+          <div>
+            <dt>First seen</dt>
+            <dd id="first-seen">-</dd>
+          </div>
+          <div>
+            <dt>Last seen</dt>
+            <dd id="last-seen">-</dd>
+          </div>
+        </dl>
+        <div class="read-control">
+          <button id="toggle-read" type="button">Mark as read</button>
+          <span id="read-status" class="read-status"></span>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>Top URLs</h2>
+          <button id="export" type="button">Export</button>
+        </div>
+        <ol id="top-urls" class="list"></ol>
+      </section>
+
+      <section>
+        <div class="section-header">
+          <h2>Top Hosts</h2>
+          <button id="options" type="button">Options</button>
+        </div>
+        <ol id="top-hosts" class="list"></ol>
+      </section>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
