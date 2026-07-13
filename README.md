@@ -67,3 +67,9 @@ web-ext build --filename "url-visit-stats-{version}.zip"
 ```
 
 The package is written to `web-ext-artifacts/` and can be submitted to Mozilla Add-ons for review and signing.
+
+## License
+
+Copyright (c) 2026 Jason Zhang.
+
+This project is licensed under the [Mozilla Public License 2.0](LICENSE). You may use, modify, and redistribute it. When distributing modified files covered by the MPL, you must make their source code available under the MPL-2.0 terms.
