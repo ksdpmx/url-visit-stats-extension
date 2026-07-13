@@ -67,6 +67,15 @@ button:hover {
   background: #eef1f4;
 }
 
+button.danger {
+  border-color: #cf222e;
+  color: #cf222e;
+}
+
+button.danger:hover {
+  background: #ffebe9;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

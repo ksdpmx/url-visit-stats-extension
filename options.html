@@ -35,10 +35,11 @@
         <h2 id="backup-title">Backup and restore</h2>
         <div class="actions">
           <button id="export-backup" type="button">Export backup</button>
-          <button id="import-backup" type="button">Import backup</button>
+          <button id="import-merge" type="button">Import and merge</button>
+          <button id="import-overwrite" class="danger" type="button">Import and overwrite</button>
           <input id="import-file" type="file" accept="application/json,.json" hidden>
         </div>
-        <p class="hint">Import replaces the current local stats, read markers, and settings.</p>
+        <p class="hint">Merge adds counts and read markers while keeping current settings. Overwrite replaces stats, read markers, and settings.</p>
       </section>
       <p id="status" role="status"></p>
     </main>

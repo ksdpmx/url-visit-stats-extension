@@ -22,6 +22,7 @@ const SETTINGS_KEY = "settings";
 const READ_KEY = "readUrls";
 const BACKUP_FORMAT = "url-visit-stats";
 const BACKUP_VERSION = 1;
+const IMPORT_MODES = new Set(["merge", "overwrite"]);
 const BADGE_TEXT = "\u2713";
 const BADGE_BG_COLOR = "#1a7f37";
 const BADGE_TEXT_COLOR = "#ffffff";
@@ -70,7 +71,7 @@ browser.runtime.onMessage.addListener((message) => {
   }
 
   if (message?.type === "importStats") {
-    const importPromise = writeQueue.then(() => importStats(message.payload));
+    const importPromise = writeQueue.then(() => importStats(message.payload, message.mode));
     writeQueue = importPromise.catch((error) =>
       console.error("URL Visit Stats: failed to import backup", error)
     );
@@ -208,9 +209,13 @@ async function exportStats() {
   };
 }
 
-async function importStats(payload) {
+async function importStats(payload, mode = "overwrite") {
   if (!isRecord(payload) || !isRecord(payload.stats)) {
     throw new Error("This file is not a valid URL Visit Stats backup.");
+  }
+
+  if (!IMPORT_MODES.has(mode)) {
+    throw new Error("This import mode is not supported.");
   }
 
   if (payload.format && payload.format !== BACKUP_FORMAT) {
@@ -222,9 +227,19 @@ async function importStats(payload) {
     throw new Error("This backup format is not supported by this extension version.");
   }
 
-  const settings = normalizeSettings(payload.settings || {});
-  const stats = sanitizeImportedStats(payload.stats);
-  const readUrls = sanitizeImportedReadMap(payload.readUrls);
+  const importedSettings = normalizeSettings(payload.settings || {});
+  const importedStats = sanitizeImportedStats(payload.stats);
+  const importedReadUrls = sanitizeImportedReadMap(payload.readUrls);
+  let settings = importedSettings;
+  let stats = importedStats;
+  let readUrls = importedReadUrls;
+
+  if (mode === "merge") {
+    const stored = await browser.storage.local.get([STATS_KEY, SETTINGS_KEY, READ_KEY]);
+    settings = normalizeSettings(stored[SETTINGS_KEY]);
+    stats = mergeStats(sanitizeImportedStats(stored[STATS_KEY] || {}), importedStats);
+    readUrls = mergeReadMaps(sanitizeImportedReadMap(stored[READ_KEY]), importedReadUrls);
+  }
 
   await browser.storage.local.set({
     [STATS_KEY]: stats,
@@ -235,6 +250,7 @@ async function importStats(payload) {
 
   return {
     ok: true,
+    mode,
     settings,
     summary: {
       exactUrls: Object.keys(stats.exactUrls).length,
@@ -482,6 +498,100 @@ function sanitizeImportedReadMap(value) {
         };
   }
   return result;
+}
+
+function mergeStats(current, imported) {
+  return {
+    exactUrls: mergeEntryMaps(current.exactUrls, imported.exactUrls, mergeUrlEntries),
+    urls: mergeEntryMaps(current.urls, imported.urls, mergeUrlEntries),
+    hosts: mergeEntryMaps(current.hosts, imported.hosts, mergeHostEntries),
+    updatedAt: latestTimestamp(current.updatedAt, imported.updatedAt)
+  };
+}
+
+function mergeEntryMaps(current, imported, mergeEntry) {
+  const result = {};
+  const keys = new Set([...Object.keys(current), ...Object.keys(imported)]);
+
+  for (const key of keys) {
+    const currentEntry = current[key];
+    const importedEntry = imported[key];
+    if (currentEntry && importedEntry) {
+      result[key] = mergeEntry(currentEntry, importedEntry);
+    } else {
+      result[key] = { ...(currentEntry || importedEntry) };
+    }
+  }
+
+  return result;
+}
+
+function mergeUrlEntries(current, imported) {
+  const importedIsNewer = timestampValue(imported.lastVisitAt) >= timestampValue(current.lastVisitAt);
+  const newer = importedIsNewer ? imported : current;
+  const older = importedIsNewer ? current : imported;
+
+  return {
+    count: addCounts(current.count, imported.count),
+    firstVisitAt: earliestTimestamp(current.firstVisitAt, imported.firstVisitAt),
+    lastVisitAt: latestTimestamp(current.lastVisitAt, imported.lastVisitAt),
+    title: newer.title || older.title,
+    rawUrl: newer.rawUrl || older.rawUrl
+  };
+}
+
+function mergeHostEntries(current, imported) {
+  return {
+    count: addCounts(current.count, imported.count),
+    firstVisitAt: earliestTimestamp(current.firstVisitAt, imported.firstVisitAt),
+    lastVisitAt: latestTimestamp(current.lastVisitAt, imported.lastVisitAt)
+  };
+}
+
+function mergeReadMaps(current, imported) {
+  const result = { ...current };
+
+  for (const [url, importedEntry] of Object.entries(imported)) {
+    const currentEntry = result[url];
+    if (!currentEntry) {
+      result[url] = { ...importedEntry };
+      continue;
+    }
+
+    const importedIsNewer = timestampValue(importedEntry.markedAt) >= timestampValue(currentEntry.markedAt);
+    const newer = importedIsNewer ? importedEntry : currentEntry;
+    const older = importedIsNewer ? currentEntry : importedEntry;
+    result[url] = {
+      markedAt: latestTimestamp(currentEntry.markedAt, importedEntry.markedAt),
+      rawUrl: newer.rawUrl || older.rawUrl || url,
+      title: newer.title || older.title
+    };
+  }
+
+  return result;
+}
+
+function addCounts(first, second) {
+  return clampNumber(
+    Number(first || 0) + Number(second || 0),
+    0,
+    Number.MAX_SAFE_INTEGER,
+    0
+  );
+}
+
+function earliestTimestamp(...values) {
+  const timestamps = values.filter((value) => value != null);
+  return timestamps.length > 0 ? Math.min(...timestamps) : null;
+}
+
+function latestTimestamp(...values) {
+  const timestamps = values.filter((value) => value != null);
+  return timestamps.length > 0 ? Math.max(...timestamps) : null;
+}
+
+function timestampValue(value) {
+  return value == null ? -1 : value;
 }
 
 function sanitizeTimestamp(value) {

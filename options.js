@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", init);
 
 let statusTimer;
+let pendingImportMode;
 
 async function init() {
   const settings = await browser.runtime.sendMessage({ type: "getSettings" });
@@ -9,10 +10,16 @@ async function init() {
   document.getElementById("settings-form").addEventListener("submit", save);
   document.getElementById("clear-stats").addEventListener("click", clearStats);
   document.getElementById("export-backup").addEventListener("click", exportBackup);
-  document.getElementById("import-backup").addEventListener("click", () => {
-    document.getElementById("import-file").click();
-  });
+  document.getElementById("import-merge").addEventListener("click", () => selectImportFile("merge"));
+  document.getElementById("import-overwrite").addEventListener("click", () => selectImportFile("overwrite"));
   document.getElementById("import-file").addEventListener("change", importBackup);
+}
+
+function selectImportFile(mode) {
+  const input = document.getElementById("import-file");
+  pendingImportMode = mode;
+  input.value = "";
+  input.click();
 }
 
 function fillForm(settings) {
@@ -68,25 +75,38 @@ async function importBackup(event) {
   }
 
   try {
+    const mode = pendingImportMode;
+    if (!mode) {
+      throw new Error("Choose an import mode before selecting a backup.");
+    }
+
     const payload = JSON.parse(await file.text());
     const summary = summarizeBackup(payload);
-    const confirmed = confirm(
-      `Import ${summary}?\n\nThis replaces the current local stats, read markers, and settings.`
-    );
+    const confirmed = confirm(`Import ${summary}?\n\n${importConfirmation(mode)}`);
     if (!confirmed) {
       return;
     }
 
-    const result = await browser.runtime.sendMessage({ type: "importStats", payload });
+    const result = await browser.runtime.sendMessage({ type: "importStats", payload, mode });
     fillForm(result.settings);
+    const action = result.mode === "merge" ? "Merged backup; now tracking" : "Imported";
     showStatus(
-      `Imported ${formatCount(result.summary.urls)} URLs and ${formatCount(result.summary.readUrls)} read markers`
+      `${action} ${formatCount(result.summary.urls)} URLs and ${formatCount(result.summary.readUrls)} read markers`
     );
   } catch (error) {
     showStatus(error.message || "Could not import this backup", true);
   } finally {
     input.value = "";
+    pendingImportMode = undefined;
   }
+}
+
+function importConfirmation(mode) {
+  if (mode === "merge") {
+    return "Visit counts will be added and read markers combined. Current settings will be kept. Importing the same backup again will add its counts again.";
+  }
+
+  return "This will replace the current local stats, read markers, and settings.";
 }
 
 function summarizeBackup(payload) {

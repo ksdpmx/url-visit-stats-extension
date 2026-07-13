@@ -21,7 +21,7 @@ Normalization can ignore hash fragments, trailing slashes, and common tracking q
 
 Temporary add-ons are removed when Firefox restarts. For persistent use, package and sign it through Mozilla Add-ons or use a developer/nightly profile that allows unsigned extensions.
 
-Before removing or restarting a temporary installation, open **Options** and choose **Export backup**. After loading the extension again, use **Import backup** to restore the counters, read markers, and settings. Import replaces the extension's current local data.
+Before removing or restarting a temporary installation, open **Options** and choose **Export backup**. After loading the extension again, use **Import and overwrite** to restore the counters, read markers, and settings. Use **Import and merge** to add counters and read markers to the current data while keeping the current settings. Merging the same backup more than once adds its counts more than once.
 
 ## Privacy
 
