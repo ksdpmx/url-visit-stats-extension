@@ -28,10 +28,15 @@
         </label>
         <div class="actions">
           <button type="submit">Save</button>
-          <button id="clear-stats" type="button">Clear local stats</button>
         </div>
       </form>
-      <section class="backup" aria-labelledby="backup-title">
+      <section class="options-section" aria-labelledby="visit-data-title">
+        <h2 id="visit-data-title">Visit data</h2>
+        <div class="actions">
+          <button id="clear-stats" class="danger" type="button">Clear visit counts</button>
+        </div>
+      </section>
+      <section class="options-section" aria-labelledby="backup-title">
         <h2 id="backup-title">Backup and restore</h2>
         <div class="actions">
           <button id="export-backup" type="button">Export backup</button>

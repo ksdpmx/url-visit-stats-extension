@@ -43,12 +43,12 @@ async function save(event) {
 }
 
 async function clearStats() {
-  if (!confirm("Clear local URL Visit Stats data?")) {
+  if (!confirm("Clear all local visit counts? Read markers and settings will be kept.")) {
     return;
   }
 
   await browser.runtime.sendMessage({ type: "clearStats" });
-  showStatus("Local stats cleared");
+  showStatus("Visit counts cleared");
 }
 
 async function exportBackup() {

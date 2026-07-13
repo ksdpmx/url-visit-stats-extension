@@ -82,7 +82,7 @@ button.danger:hover {
   gap: 8px;
 }
 
-.backup {
+.options-section {
   display: grid;
   gap: 12px;
   margin-top: 28px;
