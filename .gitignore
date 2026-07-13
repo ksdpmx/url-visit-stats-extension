@@ -1,0 +1,8 @@
+# Firefox extension build artifacts
+*.xpi
+*.zip
+web-ext-artifacts/
+
+# Local dependencies and OS metadata
+node_modules/
+.DS_Store
