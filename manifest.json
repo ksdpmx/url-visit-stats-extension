@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "URL Visit Stats",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Show visit counts for the current URL and maintain lightweight local URL statistics.",
   "permissions": [
     "storage",
