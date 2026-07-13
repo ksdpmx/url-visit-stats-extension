@@ -1,6 +1,10 @@
 document.addEventListener("DOMContentLoaded", init);
 
+const COLLAPSED_SECTIONS_KEY = "popupCollapsedSections";
+
 async function init() {
+  await setupCollapsibleSections();
+
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url || "";
 
@@ -18,6 +22,48 @@ async function init() {
   renderTopHosts(top.hosts || []);
 
   document.getElementById("options").addEventListener("click", () => browser.runtime.openOptionsPage());
+}
+
+async function setupCollapsibleSections() {
+  const sections = [
+    { key: "topUrls", buttonId: "toggle-top-urls", contentId: "top-urls", label: "Top URLs" },
+    { key: "topHosts", buttonId: "toggle-top-hosts", contentId: "top-hosts", label: "Top Hosts" }
+  ];
+  let state = {};
+
+  try {
+    const stored = await browser.storage.local.get(COLLAPSED_SECTIONS_KEY);
+    if (stored[COLLAPSED_SECTIONS_KEY] && typeof stored[COLLAPSED_SECTIONS_KEY] === "object") {
+      state = stored[COLLAPSED_SECTIONS_KEY];
+    }
+  } catch (error) {
+    console.error("URL Visit Stats: failed to load collapsed sections", error);
+  }
+
+  for (const section of sections) {
+    const button = document.getElementById(section.buttonId);
+    const content = document.getElementById(section.contentId);
+    renderCollapsedState(button, content, section.label, Boolean(state[section.key]));
+
+    button.addEventListener("click", () => {
+      const collapsed = !content.hidden;
+      state[section.key] = collapsed;
+      renderCollapsedState(button, content, section.label, collapsed);
+      browser.storage.local
+        .set({ [COLLAPSED_SECTIONS_KEY]: state })
+        .catch((error) => console.error("URL Visit Stats: failed to save collapsed sections", error));
+    });
+  }
+}
+
+function renderCollapsedState(button, content, label, collapsed) {
+  const action = collapsed ? "Expand" : "Collapse";
+  content.hidden = collapsed;
+  content.closest(".collapsible-section").classList.toggle("is-collapsed", collapsed);
+  button.setAttribute("aria-expanded", String(!collapsed));
+  button.setAttribute("aria-label", `${action} ${label}`);
+  button.title = `${action} ${label}`;
+  button.querySelector("span").textContent = collapsed ? "\u25b8" : "\u25be";
 }
 
 function renderCurrentStats(stats) {

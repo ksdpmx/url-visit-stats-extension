@@ -7,7 +7,7 @@ A small Firefox WebExtension for generic local URL visit statistics.
 - Exact URL counts stored locally after the extension is installed.
 - Normalized URL counts stored locally after the extension is installed.
 - Host-level counts stored locally after the extension is installed.
-- Top URLs, top hosts, and JSON backup/restore.
+- Collapsible top URL and host rankings, plus JSON backup/restore.
 - Mark the current page as read/unread from the popup. Read pages show a green ✓ badge on the toolbar icon.
 
 Normalization can ignore hash fragments, trailing slashes, and common tracking query parameters.

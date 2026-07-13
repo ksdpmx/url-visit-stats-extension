@@ -42,17 +42,37 @@
         </div>
       </section>
 
-      <section>
+      <section class="collapsible-section">
         <div class="section-header">
           <h2>Top URLs</h2>
+          <button
+            id="toggle-top-urls"
+            class="collapse-toggle"
+            type="button"
+            aria-expanded="true"
+            aria-controls="top-urls"
+            aria-label="Collapse Top URLs"
+            title="Collapse Top URLs"
+          ><span aria-hidden="true">&#9662;</span></button>
         </div>
         <ol id="top-urls" class="list"></ol>
       </section>
 
-      <section>
+      <section class="collapsible-section">
         <div class="section-header">
           <h2>Top Hosts</h2>
-          <button id="options" type="button">Options</button>
+          <div class="section-actions">
+            <button id="options" type="button">Options</button>
+            <button
+              id="toggle-top-hosts"
+              class="collapse-toggle"
+              type="button"
+              aria-expanded="true"
+              aria-controls="top-hosts"
+              aria-label="Collapse Top Hosts"
+              title="Collapse Top Hosts"
+            ><span aria-hidden="true">&#9662;</span></button>
+          </div>
         </div>
         <ol id="top-hosts" class="list"></ol>
       </section>

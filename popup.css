@@ -141,6 +141,34 @@ dd {
   margin-bottom: 8px;
 }
 
+.collapsible-section.is-collapsed .section-header {
+  margin-bottom: 0;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.collapse-toggle {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.collapse-toggle span {
+  display: block;
+}
+
+.list[hidden] {
+  display: none;
+}
+
 .list {
   display: grid;
   gap: 6px;
