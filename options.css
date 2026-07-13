@@ -30,6 +30,17 @@ label {
   gap: 6px;
 }
 
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-option input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 textarea {
   max-width: 520px;
   border: 1px solid #d0d7de;
