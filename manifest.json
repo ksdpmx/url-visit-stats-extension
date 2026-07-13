@@ -7,6 +7,7 @@
     "storage",
     "tabs"
   ],
+  "incognito": "not_allowed",
   "background": {
     "scripts": [
       "background.js"
@@ -22,7 +23,12 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "url-visit-stats@local"
+      "id": "url-visit-stats@local",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ]
+      }
     }
   }
 }
