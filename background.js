@@ -14,17 +14,20 @@ const DEFAULT_SETTINGS = {
     "utm_medium",
     "utm_source",
     "utm_term"
-  ],
-  keepRecentLimit: 200
+  ]
 };
 
 const STATS_KEY = "stats";
 const SETTINGS_KEY = "settings";
 const READ_KEY = "readUrls";
+const BACKUP_FORMAT = "url-visit-stats";
+const BACKUP_VERSION = 1;
 const BADGE_TEXT = "\u2713";
 const BADGE_BG_COLOR = "#1a7f37";
 const BADGE_TEXT_COLOR = "#ffffff";
-let writeQueue = Promise.resolve();
+let writeQueue = removeLegacyRecentData().catch((error) =>
+  console.error("URL Visit Stats: failed to remove legacy recent visits", error)
+);
 
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.url || changeInfo.status === "complete") {
@@ -64,6 +67,14 @@ browser.runtime.onMessage.addListener((message) => {
 
   if (message?.type === "exportStats") {
     return exportStats();
+  }
+
+  if (message?.type === "importStats") {
+    const importPromise = writeQueue.then(() => importStats(message.payload));
+    writeQueue = importPromise.catch((error) =>
+      console.error("URL Visit Stats: failed to import backup", error)
+    );
+    return importPromise;
   }
 
   if (message?.type === "clearStats") {
@@ -136,16 +147,6 @@ async function recordVisit(rawUrl, title, visitedAt) {
     stats.hosts[host] = hostEntry;
   }
 
-  stats.recent = [
-    {
-      url: rawUrl,
-      normalized,
-      host,
-      title,
-      visitedAt: visitedAt || now
-    },
-    ...(stats.recent || [])
-  ].slice(0, (await getSettings()).keepRecentLimit);
   stats.updatedAt = now;
 
   await browser.storage.local.set({ [STATS_KEY]: stats });
@@ -189,7 +190,6 @@ async function getTopUrls(limit) {
   return {
     urls,
     hosts,
-    recent: (stats.recent || []).slice(0, limit),
     updatedAt: stats.updatedAt || null
   };
 }
@@ -199,10 +199,49 @@ async function exportStats() {
   const settings = await getSettings();
   const readUrls = await getReadMap();
   return {
+    format: BACKUP_FORMAT,
+    formatVersion: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
     settings,
-    stats,
+    stats: normalizeStatsShape(stats),
     readUrls
+  };
+}
+
+async function importStats(payload) {
+  if (!isRecord(payload) || !isRecord(payload.stats)) {
+    throw new Error("This file is not a valid URL Visit Stats backup.");
+  }
+
+  if (payload.format && payload.format !== BACKUP_FORMAT) {
+    throw new Error("This backup was created by a different application.");
+  }
+
+  const formatVersion = payload.formatVersion == null ? 1 : Number(payload.formatVersion);
+  if (!Number.isInteger(formatVersion) || formatVersion < 1 || formatVersion > BACKUP_VERSION) {
+    throw new Error("This backup format is not supported by this extension version.");
+  }
+
+  const settings = normalizeSettings(payload.settings || {});
+  const stats = sanitizeImportedStats(payload.stats);
+  const readUrls = sanitizeImportedReadMap(payload.readUrls);
+
+  await browser.storage.local.set({
+    [STATS_KEY]: stats,
+    [SETTINGS_KEY]: settings,
+    [READ_KEY]: readUrls
+  });
+  await refreshActiveTabBadge();
+
+  return {
+    ok: true,
+    settings,
+    summary: {
+      exactUrls: Object.keys(stats.exactUrls).length,
+      urls: Object.keys(stats.urls).length,
+      hosts: Object.keys(stats.hosts).length,
+      readUrls: Object.keys(readUrls).length
+    }
   };
 }
 
@@ -213,22 +252,47 @@ async function clearStats() {
 
 async function getSettings() {
   const result = await browser.storage.local.get(SETTINGS_KEY);
-  return {
-    ...DEFAULT_SETTINGS,
-    ...(result[SETTINGS_KEY] || {})
-  };
+  return normalizeSettings(result[SETTINGS_KEY]);
 }
 
 async function saveSettings(settings) {
-  const merged = {
-    ...DEFAULT_SETTINGS,
-    ...settings,
-    trackingParams: parseTrackingParams(settings.trackingParams || DEFAULT_SETTINGS.trackingParams),
-    keepRecentLimit: clampNumber(settings.keepRecentLimit, 25, 2000, DEFAULT_SETTINGS.keepRecentLimit)
-  };
+  const merged = normalizeSettings(settings);
 
   await browser.storage.local.set({ [SETTINGS_KEY]: merged });
   return merged;
+}
+
+function normalizeSettings(settings) {
+  const source = isRecord(settings) ? settings : {};
+  return {
+    stripHash: typeof source.stripHash === "boolean" ? source.stripHash : DEFAULT_SETTINGS.stripHash,
+    stripTrailingSlash: typeof source.stripTrailingSlash === "boolean"
+      ? source.stripTrailingSlash
+      : DEFAULT_SETTINGS.stripTrailingSlash,
+    stripTrackingParams: typeof source.stripTrackingParams === "boolean"
+      ? source.stripTrackingParams
+      : DEFAULT_SETTINGS.stripTrackingParams,
+    trackingParams: parseTrackingParams(source.trackingParams || DEFAULT_SETTINGS.trackingParams)
+  };
+}
+
+async function removeLegacyRecentData() {
+  const stored = await browser.storage.local.get([STATS_KEY, SETTINGS_KEY]);
+  const updates = {};
+  const stats = stored[STATS_KEY];
+  const settings = stored[SETTINGS_KEY];
+
+  if (isRecord(stats) && Object.prototype.hasOwnProperty.call(stats, "recent")) {
+    updates[STATS_KEY] = normalizeStatsShape(stats);
+  }
+
+  if (isRecord(settings) && Object.prototype.hasOwnProperty.call(settings, "keepRecentLimit")) {
+    updates[SETTINGS_KEY] = normalizeSettings(settings);
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await browser.storage.local.set(updates);
+  }
 }
 
 async function getReadMap() {
@@ -341,20 +405,104 @@ function emptyStats() {
     exactUrls: {},
     urls: {},
     hosts: {},
-    recent: [],
     updatedAt: null
   };
 }
 
 function normalizeStatsShape(stats) {
+  const source = isRecord(stats) ? stats : {};
   return {
-    ...emptyStats(),
-    ...(stats || {}),
-    exactUrls: stats?.exactUrls || {},
-    urls: stats?.urls || {},
-    hosts: stats?.hosts || {},
-    recent: stats?.recent || []
+    exactUrls: isRecord(source.exactUrls) ? source.exactUrls : {},
+    urls: isRecord(source.urls) ? source.urls : {},
+    hosts: isRecord(source.hosts) ? source.hosts : {},
+    updatedAt: source.updatedAt || null
   };
+}
+
+function sanitizeImportedStats(stats) {
+  return {
+    exactUrls: sanitizeEntryMap(stats.exactUrls, sanitizeUrlEntry),
+    urls: sanitizeEntryMap(stats.urls, sanitizeUrlEntry),
+    hosts: sanitizeEntryMap(stats.hosts, sanitizeHostEntry),
+    updatedAt: sanitizeTimestamp(stats.updatedAt)
+  };
+}
+
+function sanitizeEntryMap(value, sanitizeEntry) {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const result = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (!isSafeKey(key) || !isRecord(entry)) {
+      continue;
+    }
+
+    result[key] = sanitizeEntry(entry);
+  }
+  return result;
+}
+
+function sanitizeUrlEntry(entry) {
+  return {
+    count: clampNumber(entry.count, 0, Number.MAX_SAFE_INTEGER, 0),
+    firstVisitAt: sanitizeTimestamp(entry.firstVisitAt),
+    lastVisitAt: sanitizeTimestamp(entry.lastVisitAt),
+    title: sanitizeString(entry.title),
+    rawUrl: sanitizeString(entry.rawUrl)
+  };
+}
+
+function sanitizeHostEntry(entry) {
+  return {
+    count: clampNumber(entry.count, 0, Number.MAX_SAFE_INTEGER, 0),
+    firstVisitAt: sanitizeTimestamp(entry.firstVisitAt),
+    lastVisitAt: sanitizeTimestamp(entry.lastVisitAt)
+  };
+}
+
+function sanitizeImportedReadMap(value) {
+  if (!isRecord(value)) {
+    return {};
+  }
+
+  const result = {};
+  for (const [url, entry] of Object.entries(value)) {
+    if (!isSafeKey(url) || (!isRecord(entry) && entry !== true)) {
+      continue;
+    }
+
+    result[url] = entry === true
+      ? { markedAt: null, rawUrl: url, title: "" }
+      : {
+          markedAt: sanitizeTimestamp(entry.markedAt),
+          rawUrl: sanitizeString(entry.rawUrl || url),
+          title: sanitizeString(entry.title)
+        };
+  }
+  return result;
+}
+
+function sanitizeTimestamp(value) {
+  if (value == null || value === "") {
+    return null;
+  }
+
+  const timestamp = Number(value);
+  return Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : null;
+}
+
+function sanitizeString(value) {
+  return typeof value === "string" ? value : "";
+}
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function isSafeKey(value) {
+  return value !== "__proto__" && value !== "constructor" && value !== "prototype";
 }
 
 function parseTrackingParams(value) {

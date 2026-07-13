@@ -17,7 +17,6 @@ async function init() {
   renderTopUrls(top.urls || []);
   renderTopHosts(top.hosts || []);
 
-  document.getElementById("export").addEventListener("click", exportStats);
   document.getElementById("options").addEventListener("click", () => browser.runtime.openOptionsPage());
 }
 
@@ -87,17 +86,6 @@ function renderItem(label, count, subtext) {
   main.append(url, counter);
   item.append(main, sub);
   return item;
-}
-
-async function exportStats() {
-  const payload = await browser.runtime.sendMessage({ type: "exportStats" });
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const href = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = href;
-  link.download = `url-visit-stats-${new Date().toISOString().slice(0, 10)}.json`;
-  link.click();
-  URL.revokeObjectURL(href);
 }
 
 function formatCount(value) {

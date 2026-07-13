@@ -26,15 +26,20 @@
           Tracking parameters
           <textarea id="tracking-params" rows="5"></textarea>
         </label>
-        <label>
-          Recent visit limit
-          <input id="keep-recent-limit" type="number" min="25" max="2000" step="25">
-        </label>
         <div class="actions">
           <button type="submit">Save</button>
           <button id="clear-stats" type="button">Clear local stats</button>
         </div>
       </form>
+      <section class="backup" aria-labelledby="backup-title">
+        <h2 id="backup-title">Backup and restore</h2>
+        <div class="actions">
+          <button id="export-backup" type="button">Export backup</button>
+          <button id="import-backup" type="button">Import backup</button>
+          <input id="import-file" type="file" accept="application/json,.json" hidden>
+        </div>
+        <p class="hint">Import replaces the current local stats, read markers, and settings.</p>
+      </section>
       <p id="status" role="status"></p>
     </main>
     <script src="options.js"></script>

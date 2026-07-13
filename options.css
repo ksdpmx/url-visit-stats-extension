@@ -15,6 +15,11 @@ h1 {
   font-size: 20px;
 }
 
+h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
 form {
   display: grid;
   gap: 14px;
@@ -25,8 +30,7 @@ label {
   gap: 6px;
 }
 
-textarea,
-input[type="number"] {
+textarea {
   max-width: 520px;
   border: 1px solid #d0d7de;
   border-radius: 6px;
@@ -54,10 +58,29 @@ button:hover {
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.backup {
+  display: grid;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #d8dee4;
+}
+
+.hint {
+  margin: 0;
+  color: #57606a;
+  font-size: 12px;
 }
 
 #status {
   min-height: 20px;
   color: #0969da;
+}
+
+#status.error {
+  color: #cf222e;
 }

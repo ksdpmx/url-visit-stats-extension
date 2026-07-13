@@ -7,7 +7,7 @@ A small Firefox WebExtension for generic local URL visit statistics.
 - Exact URL counts stored locally after the extension is installed.
 - Normalized URL counts stored locally after the extension is installed.
 - Host-level counts stored locally after the extension is installed.
-- Top URLs, top hosts, recent visits, and JSON export.
+- Top URLs, top hosts, and JSON backup/restore.
 - Mark the current page as read/unread from the popup. Read pages show a green ✓ badge on the toolbar icon.
 
 Normalization can ignore hash fragments, trailing slashes, and common tracking query parameters.
@@ -20,6 +20,8 @@ Normalization can ignore hash fragments, trailing slashes, and common tracking q
 4. Visit a few pages, then click the toolbar button.
 
 Temporary add-ons are removed when Firefox restarts. For persistent use, package and sign it through Mozilla Add-ons or use a developer/nightly profile that allows unsigned extensions.
+
+Before removing or restarting a temporary installation, open **Options** and choose **Export backup**. After loading the extension again, use **Import backup** to restore the counters, read markers, and settings. Import replaces the extension's current local data.
 
 ## Privacy
 
